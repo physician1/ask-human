@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import register from '../index.js';
+const args={question:'Which storage?',reason:'Changes durability.',options:[{id:'a',label:'Session',tradeoff:'Simple.'},{id:'b',label:'Disk',tradeoff:'Durable.'}]};
+function tool(){let definition;register({registerTool(value){definition=value;}});return definition;}
+test('Pi adapter registers schema and model-facing asking policy',()=>{const t=tool();assert.equal(t.name,'ask_user');assert.equal(t.parameters.properties.options.minItems,2);assert.equal(t.parameters.properties.options.maxItems,3);assert.equal(t.parameters.additionalProperties,false);assert.ok(t.promptGuidelines.some(s=>s.includes('delegated')));assert.ok(t.promptGuidelines.some(s=>s.includes('pause dependent')));});
+for(const mode of ['option','custom','cancel','no_ui'])test('adapter text and details exactly match: '+mode,async()=>{const t=tool(),answer='  Custom\n🌞  ';const ctx={hasUI:mode!=='no_ui',ui:{select:async(_t,options)=>mode==='cancel'?undefined:options[mode==='custom'?2:1],input:async()=>answer}};const result=await t.execute('id',args,undefined,undefined,ctx);assert.deepEqual(JSON.parse(result.content[0].text),result.details);const expected=mode==='option'?{status:'answered',source:'option',optionId:'b',answer:'Disk'}:mode==='custom'?{status:'answered',source:'custom',answer}:mode==='cancel'?{status:'cancelled',reason:'dismissed'}:{status:'unavailable',reason:'no_ui'};assert.deepEqual(result.details,expected);});
+test('invalid arguments reject at adapter boundary',async()=>{await assert.rejects(tool().execute('id',{...args,question:' '},undefined,undefined,{hasUI:false}),/question and reason/);});
