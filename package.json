@@ -1,0 +1,1 @@
+{"name":"ask-human","version":"1.0.0","private":true,"type":"module","description":"Pi ask_user extension with explicit human decision results","scripts":{"test":"node --test"},"engines":{"node":">=22.19.0"},"pi":{"extensions":["./index.js"]},"dependencies":{"typebox":"1.3.27"}}
